@@ -1,0 +1,2 @@
+rootProject.name='Fintech_HIDO'
+include ':app'
