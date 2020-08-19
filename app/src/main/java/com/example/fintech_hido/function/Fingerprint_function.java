@@ -1,7 +1,9 @@
 package com.example.fintech_hido.function;
 
 import android.content.Intent;
+import android.hardware.fingerprint.FingerprintManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -14,20 +16,39 @@ import com.example.fintech_hido.model.User;
 import com.example.fintech_hido.network.SSL_Connection;
 import com.example.fintech_hido.network.SendRequest;
 
+import java.security.KeyPairGenerator;
+import java.security.KeyStore;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.PublicKey;
 import java.util.HashMap;
 import java.util.concurrent.Executor;
 
+import javax.crypto.Cipher;
+
 public class Fingerprint_function extends AppCompatActivity
 {
+    private static final String TAG = "Fingerprint_function";
     private Executor executor;
     private BiometricPrompt biometricPrompt;
     private BiometricPrompt.PromptInfo promptInfo;
     private String mode;
     private Intent call_intent;
 
+
+    // key 관리
+    private FingerprintManager manager;
+    private KeyStore keyStore;
+    private KeyPairGenerator keyPairGenerator;
+    private static final String KEY_NAME = "key_name";
+    private String keyStoreName = "AndroidKeyStore";
+    private Cipher cipher;
+    private FingerprintManager.CryptoObject cryptoObject;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        manager = (FingerprintManager)getSystemService(FINGERPRINT_SERVICE);
 
         call_intent = new Intent();
         mode = getIntent().getExtras().getString("mode");
@@ -63,6 +84,15 @@ public class Fingerprint_function extends AppCompatActivity
         // send(String url, int method, final HashMap<String, String> hashMap, Context context)
         sendRequest.send("https://"+SSL_Connection.getSsl_connection().get_url()+"/registration/fingerprint",
                 1, hashMap, Fingerprint_function.this);
+    }
+
+    protected String getPublicKey() {
+        RSACryptor rsaCryptor= RSACryptor.getInstance();
+        rsaCryptor.init(this);
+
+        String publicKey = rsaCryptor.getPublicKey();
+
+        return publicKey;
     }
 
     public void auth_function()
@@ -115,17 +145,13 @@ public class Fingerprint_function extends AppCompatActivity
             if (mode.equals("register")) {
                 setResult(1000,  call_intent);
 
-                /*
-                1. 지문 정보 생성
-                 */
-
                 // 서버에 Session key, 구동 앱 은행 코드, public key, imei 전송
                 SendRequest sendRequest = new SendRequest();
                 HashMap<String, String> hashMap = new HashMap<String, String>();
                 hashMap.put("session_key", User.getInstance().get_session_key());
                 hashMap.put("running", String.valueOf(User.getInstance().get_running_code()));
                 hashMap.put("imei", User.getInstance().get_imei());
-                hashMap.put("public_key", "key"); // 생성한 키 보내기
+                hashMap.put("public_key", getPublicKey());
                 System.out.println("HASH MAP check : "+hashMap);
                 // send(String url, int method, final HashMap<String, String> hashMap, Context context)
                 sendRequest.send("https://"+SSL_Connection.getSsl_connection().get_url()+"/registration/key",
