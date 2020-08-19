@@ -3,23 +3,20 @@ package com.example.fintech_hido.function;
 import android.content.Intent;
 import android.hardware.fingerprint.FingerprintManager;
 import android.os.Bundle;
-import android.util.Log;
 import android.widget.Toast;
-
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.biometric.BiometricPrompt;
 import androidx.core.content.ContextCompat;
-
 import com.example.fintech_hido.R;
 import com.example.fintech_hido.model.User;
 import com.example.fintech_hido.network.SSL_Connection;
 import com.example.fintech_hido.network.SendRequest;
 
+import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
+import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.HashMap;
 import java.util.concurrent.Executor;
@@ -52,6 +49,7 @@ public class Fingerprint_function extends AppCompatActivity
 
         call_intent = new Intent();
         mode = getIntent().getExtras().getString("mode");
+
         if(mode.equals("register")) {
             setContentView(R.layout.fingerprint_register);
             register_function();
@@ -64,7 +62,7 @@ public class Fingerprint_function extends AppCompatActivity
             HashMap<String, String> hashMap = new HashMap<String, String>();
             hashMap.put("session_key", getIntent().getExtras().getString("session_key").toString());
             hashMap.put("imei", getIntent().getExtras().getString("imei").toString());
-            hashMap.put("running", getIntent().getExtras().getString("running").toString());
+            hashMap.put("running", String.valueOf(getIntent().getExtras().getInt("running")));
             hashMap.put("saved", getIntent().getExtras().getString("saved").toString());
             hashMap.put("mode", "auth_check");
             SendRequest sendRequest = new SendRequest();
@@ -98,20 +96,26 @@ public class Fingerprint_function extends AppCompatActivity
                 1, hashMap, Fingerprint_function.this);
     }
 
-<<<<<<< HEAD
+
     protected String getPublicKey() {
+
         RSACryptor rsaCryptor= RSACryptor.getInstance();
         rsaCryptor.init(this);
-
-        String publicKey = rsaCryptor.getPublicKey();
+        String publicKey = rsaCryptor.getPublicKey().toString();
 
         return publicKey;
     }
 
-    public void auth_function()
-=======
+    protected  String Encrypt(String text) {
+
+        RSACryptor rsaCryptor= RSACryptor.getInstance();
+        rsaCryptor.init(this);
+        String privateKey = rsaCryptor.encryptTest(text);
+        return privateKey;
+
+    }
+
     public void auth_function(boolean result)
->>>>>>> b9286cb9ea6fd80e544b94f98a7e16350e6ff831
     {
         if(result) {
             mode = "auth";
@@ -162,7 +166,6 @@ public class Fingerprint_function extends AppCompatActivity
 
     public void call_back(boolean result)
     {
-
         if(result) {
             call_intent.putExtra("result", "true");
 
@@ -176,9 +179,9 @@ public class Fingerprint_function extends AppCompatActivity
                 hashMap.put("running", String.valueOf(User.getInstance().get_running_code()));
                 hashMap.put("imei", User.getInstance().get_imei());
                 hashMap.put("public_key", getPublicKey());
-                System.out.println("HASH MAP check : "+hashMap);
+                System.out.println("HASH MAP check : " + hashMap);
                 // send(String url, int method, final HashMap<String, String> hashMap, Context context)
-                sendRequest.send("https://"+SSL_Connection.getSsl_connection().get_url()+"/registration/key",
+                sendRequest.send("https://" + SSL_Connection.getSsl_connection().get_url() + "/registration/key",
                         1, hashMap, Fingerprint_function.this);
             }
             else if(mode.equals("auth")){
@@ -186,20 +189,18 @@ public class Fingerprint_function extends AppCompatActivity
                 HashMap<String, String> hashMap = new HashMap<String, String>();
                 hashMap.put("session_key", getIntent().getExtras().getString("session_key").toString());
                 hashMap.put("imei", getIntent().getExtras().getString("imei").toString());
-                hashMap.put("running", getIntent().getExtras().getString("running").toString());
+                hashMap.put("running", String.valueOf(getIntent().getExtras().getInt("running")));
                 hashMap.put("saved", getIntent().getExtras().getString("saved").toString());
                 hashMap.put("mode", "auth");
 
                 //
-                hashMap.put("challenge_number", User.getInstance().get_challenge_number());
+                hashMap.put("challenge_number", Encrypt(User.getInstance().get_challenge_number()));
                 // key로 암호화해서 전송해야 한다!
-
-
                 //
 
                 SendRequest sendRequest = new SendRequest();
                 // send(String url, int method, final HashMap<String, String> hashMap, Context context)
-                sendRequest.send("https://"+SSL_Connection.getSsl_connection().get_url()+"/auth/challenge",
+                sendRequest.send("https://"+SSL_Connection.getSsl_connection().get_url()+"/auth",
                         1, hashMap , Fingerprint_function.this);
             }
         }

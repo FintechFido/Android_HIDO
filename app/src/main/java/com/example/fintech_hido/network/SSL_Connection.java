@@ -21,7 +21,7 @@ public class SSL_Connection
 
     private SSL_Connection()
     {
-        url = "172.30.1.15";
+        url = "192.168.0.6";
     }
 
     public static SSL_Connection getSsl_connection() {

@@ -20,16 +20,10 @@
             </intent-filter>
         </activity>
         <activity android:name=".MainActivity"></activity>
-        <activity
-            android:name=".function.Fingerprint_Register"/>
-        <activity
-            android:name=".function.Fingerprint_Authentication"/>
         <activity android:name=".network.Server_Connection"/>
         <activity
             android:name=".function.Fingerprint_function"
             android:exported="true"/>
-        <activity android:name=".function.success_function"/>
-        <activity android:name=".function.fail_function"/>
     </application>
 
 </manifest>
