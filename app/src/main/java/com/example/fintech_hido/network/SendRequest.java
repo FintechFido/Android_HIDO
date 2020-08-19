@@ -12,6 +12,7 @@ import com.android.volley.toolbox.StringRequest;
 import com.example.fintech_hido.MainActivity;
 import com.example.fintech_hido.function.Alert;
 import com.example.fintech_hido.function.Fingerprint_function;
+import com.example.fintech_hido.model.User;
 
 import org.json.JSONObject;
 
@@ -107,6 +108,27 @@ PATCH = 7
                         Fingerprint_function fingerprint_function = (Fingerprint_function) context;
                         fingerprint_function.call_back(false);
                         //Alert.alert_function(context, "register");
+                    }
+                }
+                else if (jsonObject.getString("mode").toString().equals("auth_check")) {
+                    //  지문인증 전 유무 확인
+                    if (jsonObject.getString("result").toString().equals("true")) {
+                        User.getInstance().set_challenge_number(jsonObject.getString("challenge_number"));
+                        Fingerprint_function fingerprint_function = (Fingerprint_function) context;
+                        fingerprint_function.auth_function(true);
+                    } else {
+                        Fingerprint_function fingerprint_function = (Fingerprint_function) context;
+                        fingerprint_function.auth_function(false);
+                    }
+                }
+                else if (jsonObject.getString("mode").toString().equals("auth")) {
+                    //  지문인증 결과
+                    if (jsonObject.getString("result").toString().equals("true")) {
+                        Fingerprint_function fingerprint_function = (Fingerprint_function) context;
+                        fingerprint_function.return_result(true);
+                    } else {
+                        Fingerprint_function fingerprint_function = (Fingerprint_function) context;
+                        fingerprint_function.return_result(false);
                     }
                 }
                 else {

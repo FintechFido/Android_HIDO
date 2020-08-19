@@ -35,9 +35,21 @@ public class Fingerprint_function extends AppCompatActivity
             setContentView(R.layout.fingerprint_register);
             register_function();
         }
-        else {
+        else if(mode.equals("auth")){
             setContentView(R.layout.fingerprint_auth);
 
+        }
+        else if(mode.equals("auth_check")) {
+            HashMap<String, String> hashMap = new HashMap<String, String>();
+            hashMap.put("session_key", getIntent().getExtras().getString("session_key").toString());
+            hashMap.put("imei", getIntent().getExtras().getString("imei").toString());
+            hashMap.put("running", getIntent().getExtras().getString("running").toString());
+            hashMap.put("saved", getIntent().getExtras().getString("saved").toString());
+            hashMap.put("mode", "auth_check");
+            SendRequest sendRequest = new SendRequest();
+            // send(String url, int method, final HashMap<String, String> hashMap, Context context)
+            sendRequest.send("https://"+SSL_Connection.getSsl_connection().get_url()+"/fingerprint/valid",
+                    1, hashMap , Fingerprint_function.this);
         }
     }
 
@@ -65,9 +77,17 @@ public class Fingerprint_function extends AppCompatActivity
                 1, hashMap, Fingerprint_function.this);
     }
 
-    public void auth_function()
+    public void auth_function(boolean result)
     {
-
+        if(result) {
+            mode = "auth";
+            do_fingerprint();
+        }
+        else {
+            call_intent.putExtra("result", "true");
+            setResult(4000, call_intent);
+            finish();
+        }
     }
 
     public void do_fingerprint() {
@@ -131,18 +151,33 @@ public class Fingerprint_function extends AppCompatActivity
                 sendRequest.send("https://"+SSL_Connection.getSsl_connection().get_url()+"/registration/key",
                         1, hashMap, Fingerprint_function.this);
             }
-            else {
-                setResult(2000,  call_intent);
-                /*
-                1. 지문 인증 프로세스
-                 */
+            else if(mode.equals("auth")){
+
+                HashMap<String, String> hashMap = new HashMap<String, String>();
+                hashMap.put("session_key", getIntent().getExtras().getString("session_key").toString());
+                hashMap.put("imei", getIntent().getExtras().getString("imei").toString());
+                hashMap.put("running", getIntent().getExtras().getString("running").toString());
+                hashMap.put("saved", getIntent().getExtras().getString("saved").toString());
+                hashMap.put("mode", "auth");
+
+                //
+                hashMap.put("challenge_number", User.getInstance().get_challenge_number());
+                // key로 암호화해서 전송해야 한다!
+
+
+                //
+
+                SendRequest sendRequest = new SendRequest();
+                // send(String url, int method, final HashMap<String, String> hashMap, Context context)
+                sendRequest.send("https://"+SSL_Connection.getSsl_connection().get_url()+"/auth/challenge",
+                        1, hashMap , Fingerprint_function.this);
             }
         }
         else {
             call_intent.putExtra("result", "false");
             if (mode.equals("register"))
                 setResult(1000,  call_intent);
-            else
+            else if(mode.equals("auth"))
                 setResult(2000,  call_intent);
             finish();
         }
@@ -150,12 +185,23 @@ public class Fingerprint_function extends AppCompatActivity
 
     public void return_result(boolean result) {
 
-        if(result) {
-            call_intent.putExtra("result", "true");
-            finish();
+        if(mode.equals("register")) {
+            if (result) {
+                call_intent.putExtra("result", "true");
+                finish();
+            } else {
+                Alert.alert_function(Fingerprint_function.this, "register");
+            }
         }
-        else {
-            Alert.alert_function(Fingerprint_function.this, "register");
+        else if(mode.equals("auth")) {
+            if (result) {
+                call_intent.putExtra("result", "true");
+                finish();
+            } else {
+                Alert.alert_function(Fingerprint_function.this, "register");
+                // 이 부분 따로 만들어줘야 한다
+            }
+
         }
 
     }
