@@ -6,6 +6,7 @@ public class User
     private int running_code;
     private int saved_code;
     private String my_imei;
+    private String challenge_number;
 
     private static User user = new User();
 
@@ -27,6 +28,11 @@ public class User
         this.my_imei = imei;
     }
 
+    public void set_challenge_number(String challenge_number) {
+        this.challenge_number = challenge_number;
+    }
+
+    public String get_challenge_number() {return challenge_number;}
     public String get_session_key()
     {
         return session_key;
