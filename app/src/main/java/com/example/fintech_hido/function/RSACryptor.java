@@ -19,9 +19,6 @@ import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.Signature;
 import java.security.UnrecoverableEntryException;
 import java.security.cert.CertificateException;
 import java.security.spec.RSAKeyGenParameterSpec;
@@ -40,7 +37,7 @@ public class RSACryptor {
 
 
     // 비대칭 암호화(공개키) 알고리즘 호출 상수
-    private static final String CIPHER_ALGORITHM = "RSA/ECB/PKCS1Padding";
+    private static final String CIPHER_ALGORITHM = "RSA/ECB/OAEPWithSHA-256AndMGF1Padding";
 
     // Singleton
     private RSACryptor() {
@@ -92,7 +89,7 @@ public class RSACryptor {
             keyPairGenerator.initialize(new KeyGenParameterSpec.Builder(packageName, KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT )
                     .setAlgorithmParameterSpec(new RSAKeyGenParameterSpec(2048, RSAKeyGenParameterSpec.F4))
                     .setBlockModes(KeyProperties.BLOCK_MODE_CBC)
-                    .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_RSA_PKCS1)
+                    .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_RSA_OAEP)
                     .setDigests(KeyProperties.DIGEST_SHA512, KeyProperties.DIGEST_SHA384, KeyProperties.DIGEST_SHA256)
                     .setSignaturePaddings(KeyProperties.SIGNATURE_PADDING_RSA_PKCS1)
                     .setUserAuthenticationRequired(false)
@@ -151,41 +148,6 @@ public class RSACryptor {
         return publicKey;
     }
 
-/*
-    public String encrypt_subin_test(String text) {
-        String encryptedString = text;
-        byte[] s;
-        try {
-            byte[] bytes = text.getBytes("UTF-8");
-            Signature signature = Signature.getInstance("NONEwithRSA");
-            signature.initSign(privateKey);
-            //signature.initSign(((KeyStore.PrivateKeyEntry) keyEntry).getPrivateKey());
-            signature.update(bytes);
-            s = signature.sign();
-            System.out.println("SIGN RESULT : "+s.toString());
-            return s.toString();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        /*
-        try {
-            byte[] bytes = text.getBytes("UTF-8");
-
-            Cipher cipher = Cipher.getInstance(CIPHER_ALGORITHM);
-            cipher.init(Cipher.ENCRYPT_MODE, ((KeyStore.PrivateKeyEntry) keyEntry).getPrivateKey());
-            byte[] encryptedBytes = cipher.doFinal(bytes);
-            encryptedString = new String(Base64.encode(encryptedBytes, Base64.DEFAULT));
-        } catch (UnsupportedEncodingException | NoSuchPaddingException | NoSuchAlgorithmException | InvalidKeyException | BadPaddingException | IllegalBlockSizeException e) {
-            Log.e(TAG, "Encrypt fail", e);
-        }
-
-
-        return "";
-    }
-
-
- */
-
 
     /**
      * 암호화 (privateKey) 테스트 (privateKey 와 publicKey가 같은 쌍인지 확인)
@@ -196,17 +158,12 @@ public class RSACryptor {
         String encryptedString = plain;
         try {
             byte[] bytes = plain.getBytes("UTF-8");
-/*
+
             Cipher cipher = Cipher.getInstance(CIPHER_ALGORITHM);
             cipher.init(Cipher.ENCRYPT_MODE, ((KeyStore.PrivateKeyEntry) keyEntry).getCertificate().getPublicKey());
             Log.d(TAG, "Encrypt Text: " + plain);
             byte[] encryptedBytes = cipher.doFinal(bytes);
 
- */
-            Cipher cipher = Cipher.getInstance(CIPHER_ALGORITHM);
-            cipher.init(Cipher.ENCRYPT_MODE, ((KeyStore.PrivateKeyEntry)keyEntry).getPrivateKey());
-            byte[] encryptedBytes = cipher.doFinal(bytes);
-            encryptedString = new String(Base64.encode(encryptedBytes, Base64.DEFAULT));
 
         } catch (UnsupportedEncodingException | NoSuchPaddingException | NoSuchAlgorithmException | InvalidKeyException | BadPaddingException | IllegalBlockSizeException e) {
             Log.e(TAG, "Encrypt fail", e);
@@ -224,10 +181,19 @@ public class RSACryptor {
         try {
             Cipher cipher = Cipher.getInstance(CIPHER_ALGORITHM);
             cipher.init(Cipher.DECRYPT_MODE, ((KeyStore.PrivateKeyEntry) keyEntry).getPrivateKey());
+
+/*
+소희님 기존 코드
             byte[] base64Bytes = encryptedString.getBytes("UTF-8");
             byte[] decryptedBytes = Base64.decode(base64Bytes, Base64.DEFAULT);
-
             decryptedString = new String(cipher.doFinal(decryptedBytes));
+ */
+
+            byte[] byteEncrypted = java.util.Base64.getDecoder().decode(encryptedString.getBytes());
+            byte[] bytePlain = cipher.doFinal(byteEncrypted);
+            decryptedString = new String(bytePlain, "utf-8");
+
+
             Log.d(TAG, "Decrypted Text: "  + decryptedString);
             } catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException | BadPaddingException | UnsupportedEncodingException | IllegalBlockSizeException e) {
                 Log.e(TAG, "Decrypt fail", e);

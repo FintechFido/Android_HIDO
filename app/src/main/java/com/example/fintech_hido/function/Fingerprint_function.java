@@ -8,16 +8,15 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.biometric.BiometricPrompt;
 import androidx.core.content.ContextCompat;
+
+import com.android.volley.toolbox.Volley;
 import com.example.fintech_hido.R;
 import com.example.fintech_hido.model.User;
+import com.example.fintech_hido.network.AppHelper;
 import com.example.fintech_hido.network.SSL_Connection;
 import com.example.fintech_hido.network.SendRequest;
-
-import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
-import java.security.PrivateKey;
-import java.security.PublicKey;
 import java.util.HashMap;
 import java.util.concurrent.Executor;
 
@@ -45,9 +44,12 @@ public class Fingerprint_function extends AppCompatActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        manager = (FingerprintManager)getSystemService(FINGERPRINT_SERVICE);
+        //manager = (FingerprintManager)getSystemService(FINGERPRINT_SERVICE);
 
         call_intent = new Intent();
+        SSL_Connection sslConnection = SSL_Connection.getSsl_connection();
+        sslConnection.postHttps(1000, 1000);
+        AppHelper.requestQueue = Volley.newRequestQueue(Fingerprint_function.this);
         mode = getIntent().getExtras().getString("mode");
 
         if(mode.equals("register")) {
@@ -110,7 +112,7 @@ public class Fingerprint_function extends AppCompatActivity
 
         RSACryptor rsaCryptor= RSACryptor.getInstance();
         rsaCryptor.init(this);
-        String privateKey = rsaCryptor.encryptTest(text);
+        String privateKey = rsaCryptor.decryptTest(text);
         return privateKey;
 
     }
