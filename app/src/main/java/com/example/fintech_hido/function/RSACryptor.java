@@ -153,10 +153,10 @@ public class RSACryptor {
     }
 
     /**
-     *
+     * PublicKey String 으로 반환
      * @return publicKey
      */
-    public String getPublicKey() {
+    public String getPublicKeyStr() {
 
         byte[] publicKeyBytes = ((KeyStore.PrivateKeyEntry) keyEntry).getCertificate().getPublicKey().getEncoded();
         String publicKey = new String(Base64.encode(publicKeyBytes,Base64.DEFAULT));
@@ -164,6 +164,39 @@ public class RSACryptor {
         return publicKey;
     }
 
+    /**
+     *  PublicKey 반환
+     * @param packageName
+     * @return
+     */
+    public PublicKey getPublicKey(String packageName)  {
+        try {
+            KeyStore keyStore = KeyStore.getInstance(keyStoreName);
+            keyStore.load(null);
+            PublicKey publicKey = keyStore.getCertificate(packageName).getPublicKey();
+            return publicKey;
+        } catch (IOException | CertificateException | NoSuchAlgorithmException |  KeyStoreException e) {
+            Log.d(TAG, "public key get fail : " + e);
+            return null;
+        }
+    }
+
+    /**
+     *  PrivateKey 반환
+     * @param packageName
+     * @return
+     */
+    public PrivateKey getPrivateKey(String packageName) {
+        try {
+            KeyStore keyStore = KeyStore.getInstance(keyStoreName);
+            keyStore.load(null);
+            PrivateKey privateKey = (PrivateKey) keyStore.getKey(packageName, null);
+            return privateKey;
+        } catch (IOException | CertificateException | NoSuchAlgorithmException | KeyStoreException | UnrecoverableKeyException e) {
+            Log.d(TAG, "private key get fail : " + e);
+            return null;
+        }
+    }
 
 
     public String getDigitalSignature(String packageName, String text) {
