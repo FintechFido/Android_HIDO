@@ -110,7 +110,7 @@ PATCH = 7
                         //Alert.alert_function(context, "register");
                     }
                 }
-                else if (jsonObject.getString("mode").toString().equals("auth_check")) {
+                else if (jsonObject.getString("mode").toString().equals("fingerprint_valid")) {
                     //  지문인증 전 유무 확인
                     if (jsonObject.getString("result").toString().equals("true")) {
                         User.getInstance().set_challenge_number(jsonObject.getString("challenge_number"));
