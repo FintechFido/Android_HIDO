@@ -19,9 +19,13 @@ import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.Signature;
+import java.security.SignatureException;
 import java.security.UnrecoverableEntryException;
+import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
-import java.security.spec.RSAKeyGenParameterSpec;
 import java.util.Calendar;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -86,17 +90,29 @@ public class RSACryptor {
         try{
             KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(KeyProperties.KEY_ALGORITHM_RSA, keyStoreName);
 
-            keyPairGenerator.initialize(new KeyGenParameterSpec.Builder(packageName, KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT )
-                    .setAlgorithmParameterSpec(new RSAKeyGenParameterSpec(2048, RSAKeyGenParameterSpec.F4))
-                    .setBlockModes(KeyProperties.BLOCK_MODE_CBC)
-                    .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_RSA_OAEP)
-                    .setDigests(KeyProperties.DIGEST_SHA512, KeyProperties.DIGEST_SHA384, KeyProperties.DIGEST_SHA256)
-                    .setSignaturePaddings(KeyProperties.SIGNATURE_PADDING_RSA_PKCS1)
-                    .setUserAuthenticationRequired(false)
-                    .build());
+            /* for encrypt / decrypt */
+//            keyPairGenerator.initialize(new KeyGenParameterSpec.Builder(packageName, KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT )
+//                    .setAlgorithmParameterSpec(new RSAKeyGenParameterSpec(2048, RSAKeyGenParameterSpec.F4))
+//                    .setBlockModes(KeyProperties.BLOCK_MODE_CBC)
+//                    .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_RSA_OAEP)
+//                    .setDigests(KeyProperties.DIGEST_SHA512, KeyProperties.DIGEST_SHA384, KeyProperties.DIGEST_SHA256)
+//                    .setSignaturePaddings(KeyProperties.SIGNATURE_PADDING_RSA_PKCS1)
+//                    .setUserAuthenticationRequired(false)
+//                    .build());
 
+            // signature
+            keyPairGenerator.initialize(
+                    new KeyGenParameterSpec.Builder(
+                            packageName,
+                            KeyProperties.PURPOSE_SIGN)
+                            .setDigests(KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA512)
+                            .setSignaturePaddings(KeyProperties.SIGNATURE_PADDING_RSA_PSS)
+                            .build());
 
             KeyPair keyPair = keyPairGenerator.generateKeyPair();
+            //Signature signature = Signature.getInstance("SHA256withRSA/PSS");
+            //signature.initSign(keyPair.getPrivate());
+
             Log.d(TAG, "RSA init M");
         } catch (GeneralSecurityException e){
             Log.e(TAG, "알고리즘 지원하지 않는 디바이스", e);
@@ -146,6 +162,53 @@ public class RSACryptor {
         String publicKey = new String(Base64.encode(publicKeyBytes,Base64.DEFAULT));
 
         return publicKey;
+    }
+
+
+
+    public String getDigitalSignature(String packageName, String text) {
+        try{
+            PrivateKey pk = getPrivateKey(packageName);
+
+            byte[] data = text.getBytes("UTF8");
+
+            Signature signature = Signature.getInstance("SHA256withRSA/PSS");
+            signature.initSign(pk);
+            signature.update(data);
+            byte[] signatureBytes = signature.sign();
+            String signatureString = new String(signatureBytes, "UTF8");
+            Log.d(TAG, "signatureString original: "+ text);
+            Log.d(TAG, "signatureString: "+ signatureString);
+            return signatureString;
+        } catch (NoSuchAlgorithmException | InvalidKeyException | UnsupportedEncodingException | SignatureException e) {
+            Log.e(TAG, "error in digital signature" + e);
+            return null;
+        }
+    }
+
+    public boolean verifySignature(String packageName, String signature, String original){
+        try{
+
+            // Get private key from String
+            PublicKey publicKey = getPublicKey(packageName);
+            byte[] publicKeyBytes = publicKey.getEncoded();
+
+            // text to bytes
+            byte[] originalBytes = original.getBytes("UTF8");
+            //signature to bytes
+            byte[] signatureBytes = signature.getBytes("UTF8");
+            //byte[] signatureBytes =new byte[](signature, );
+
+            Signature sig = Signature.getInstance("SHA256withRSA/PSS");
+            sig.initVerify(publicKey);
+            sig.update(originalBytes);
+            Log.d(TAG, "varifiy ..");
+            return sig.verify(signatureBytes);
+        }catch(Exception e){
+            e.printStackTrace();
+            Log.e(TAG,"error for verify:" + e.getMessage());
+            return false;
+        }
     }
 
 

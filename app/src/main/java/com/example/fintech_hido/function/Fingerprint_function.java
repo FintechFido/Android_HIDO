@@ -1,8 +1,8 @@
 package com.example.fintech_hido.function;
 
 import android.content.Intent;
-import android.hardware.fingerprint.FingerprintManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -15,12 +15,9 @@ import com.example.fintech_hido.model.User;
 import com.example.fintech_hido.network.AppHelper;
 import com.example.fintech_hido.network.SSL_Connection;
 import com.example.fintech_hido.network.SendRequest;
-import java.security.KeyPairGenerator;
-import java.security.KeyStore;
+
 import java.util.HashMap;
 import java.util.concurrent.Executor;
-
-import javax.crypto.Cipher;
 
 public class Fingerprint_function extends AppCompatActivity
 {
@@ -31,20 +28,9 @@ public class Fingerprint_function extends AppCompatActivity
     private String mode;
     private Intent call_intent;
 
-
-    // key 관리
-    private FingerprintManager manager;
-    private KeyStore keyStore;
-    private KeyPairGenerator keyPairGenerator;
-    private static final String KEY_NAME = "key_name";
-    private String keyStoreName = "AndroidKeyStore";
-    private Cipher cipher;
-    private FingerprintManager.CryptoObject cryptoObject;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //manager = (FingerprintManager)getSystemService(FINGERPRINT_SERVICE);
 
         call_intent = new Intent();
         SSL_Connection sslConnection = SSL_Connection.getSsl_connection();
@@ -100,11 +86,14 @@ public class Fingerprint_function extends AppCompatActivity
 
 
     protected String getPublicKey() {
-
         RSACryptor rsaCryptor= RSACryptor.getInstance();
         rsaCryptor.init(this);
-        String publicKey = rsaCryptor.getPublicKey().toString();
+        // signature  test
+        String signature = rsaCryptor.getDigitalSignature(this.getPackageName(), "test text");
+        boolean result = rsaCryptor.verifySignature(this.getPackageName(), signature, "test text");
+        Log.d(TAG, "final dec test result: " + result);
 
+        String publicKey = rsaCryptor.getPublicKeyStr();
         return publicKey;
     }
 
