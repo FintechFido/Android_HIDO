@@ -105,7 +105,8 @@ public class RSACryptor {
                             packageName,
                             KeyProperties.PURPOSE_SIGN | KeyProperties.PURPOSE_VERIFY)
                             .setDigests(KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA512)
-                            .setSignaturePaddings(KeyProperties.SIGNATURE_PADDING_RSA_PSS)
+                            .setSignaturePaddings(KeyProperties.SIGNATURE_PADDING_RSA_PKCS1)
+                                    //KeyProperties.SIGNATURE_PADDING_RSA_PSS)
                             .build());
 
             keyPairGenerator.generateKeyPair();
@@ -196,7 +197,7 @@ public class RSACryptor {
 
     public byte[] getDigitalSignature(String packageName, String text) {
         try{
-            Signature signature = Signature.getInstance("SHA256withRSA/PSS");
+            Signature signature = Signature.getInstance("SHA256withRSA");
             signature.initSign(getPrivateKey(packageName));
             //"SHA256withECDSA");
 
@@ -214,7 +215,7 @@ public class RSACryptor {
     public boolean verifySignature(String packageName, byte[] signature, String original){
         try{
             //byte[] signatureBytes = signature.getBytes("UTF-8");
-            Signature sig = Signature.getInstance("SHA256withRSA/PSS");
+            Signature sig = Signature.getInstance("SHA256withRSA");
             sig.initVerify(getPublicKey(packageName));
 
             byte[] data = original.getBytes("UTF-8");

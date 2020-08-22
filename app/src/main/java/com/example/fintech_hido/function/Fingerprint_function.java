@@ -16,6 +16,7 @@ import com.example.fintech_hido.network.AppHelper;
 import com.example.fintech_hido.network.SSL_Connection;
 import com.example.fintech_hido.network.SendRequest;
 
+import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.concurrent.Executor;
 
@@ -89,13 +90,65 @@ public class Fingerprint_function extends AppCompatActivity
         RSACryptor rsaCryptor= RSACryptor.getInstance();
         rsaCryptor.init(this);
         // signature  test
-        byte[] signature = rsaCryptor.getDigitalSignature(this.getPackageName(), "test text");
-        boolean result = rsaCryptor.verifySignature(this.getPackageName(), signature, "test text");
+        byte[] signature = rsaCryptor.getDigitalSignature(this.getPackageName(), "123456789");
+        boolean result = rsaCryptor.verifySignature(this.getPackageName(), signature, "123456789");
         Log.d(TAG, "final dec test result: " + result);
+
+        // crypto test
+//        String a = rsaCryptor.encryptTest(this.getPackageName(), "123456789");
+//        String test = rsaCryptor.decryptTest(this.getPackageName(), a);
+//        Log.d(TAG, "final dec test: "+ test);
 
         String publicKey = rsaCryptor.getPublicKeyStr();
         return publicKey;
     }
+
+    /**
+     * 바이너리 바이트 배열을 스트링으로 변환
+     *
+     * @param b
+     * @return
+     */
+    public static String byteArrayToBinaryString(byte[] b) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < b.length; ++i) {
+            sb.append(byteToBinaryString(b[i]));
+        }
+        return sb.toString();
+    }
+
+    /**
+     * 바이너리 바이트를 스트링으로 변환
+     *
+     * @param n
+     * @return
+     */
+    public static String byteToBinaryString(byte n) {
+        StringBuilder sb = new StringBuilder("00000000");
+        for (int bit = 0; bit < 8; bit++) {
+            if (((n >> bit) & 1) > 0) {
+                sb.setCharAt(7 - bit, '1');
+            }
+        }
+        return sb.toString();
+    }
+
+
+
+    private String getEncChallengeNum() {
+        RSACryptor rsaCryptor= RSACryptor.getInstance();
+        rsaCryptor.init(this);
+        // signature  test
+        byte[] signature = rsaCryptor.getDigitalSignature(this.getPackageName(), "123456789");
+//        try {
+//            return new String(signature, "UTF-8");
+//        } catch (UnsupportedEncodingException e) {
+//            Log.e(TAG, "getEncChallengeNum encode fail: " + e);
+//            return null;
+//        }
+        return byteArrayToBinaryString(signature);
+    }
+
 
     protected  String Encrypt(String text) {
 
@@ -105,6 +158,7 @@ public class Fingerprint_function extends AppCompatActivity
         return privateKey;
 
     }
+
 
     public void auth_function(boolean result)
     {
@@ -183,9 +237,11 @@ public class Fingerprint_function extends AppCompatActivity
                 hashMap.put("running", String.valueOf(getIntent().getExtras().getInt("running")));
                 hashMap.put("saved", getIntent().getExtras().getString("saved").toString());
                 hashMap.put("mode", "auth");
-
+                String challenge_num = getEncChallengeNum();
                 //
-                hashMap.put("challenge_number", Encrypt(User.getInstance().get_challenge_number()));
+                hashMap.put("challenge_number", challenge_num);
+                Log.d(TAG, "final dec challenge :" +challenge_num);
+                        //Encrypt(User.getInstance().get_challenge_number()));
                 // key로 암호화해서 전송해야 한다!
                 //
 
@@ -204,6 +260,7 @@ public class Fingerprint_function extends AppCompatActivity
             finish();
         }
     }
+
 
     public void return_result(boolean result) {
 
