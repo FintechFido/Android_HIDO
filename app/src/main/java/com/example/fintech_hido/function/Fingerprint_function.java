@@ -89,7 +89,7 @@ public class Fingerprint_function extends AppCompatActivity
         RSACryptor rsaCryptor= RSACryptor.getInstance();
         rsaCryptor.init(this);
         // signature  test
-        String signature = rsaCryptor.getDigitalSignature(this.getPackageName(), "test text");
+        byte[] signature = rsaCryptor.getDigitalSignature(this.getPackageName(), "test text");
         boolean result = rsaCryptor.verifySignature(this.getPackageName(), signature, "test text");
         Log.d(TAG, "final dec test result: " + result);
 

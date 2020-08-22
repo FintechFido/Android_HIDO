@@ -25,6 +25,7 @@ import java.security.Signature;
 import java.security.SignatureException;
 import java.security.UnrecoverableEntryException;
 import java.security.UnrecoverableKeyException;
+import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.util.Calendar;
 import javax.crypto.BadPaddingException;
@@ -65,11 +66,9 @@ public class RSACryptor {
                 // KeyStore에 패키지 네임이 등록되어 있지 않을 때 실행
                 if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     // API Level 23 이상 (마쉬멜로우)
-                    System.out.println("HERE 11");
                     initAndroidM(context.getPackageName());
                 } else {
                     // API Level 19 이상 (킷캣)
-                    System.out.println("HERE 22");
                     initAndroidK(context);
                 }
             }
@@ -104,15 +103,12 @@ public class RSACryptor {
             keyPairGenerator.initialize(
                     new KeyGenParameterSpec.Builder(
                             packageName,
-                            KeyProperties.PURPOSE_SIGN)
+                            KeyProperties.PURPOSE_SIGN | KeyProperties.PURPOSE_VERIFY)
                             .setDigests(KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA512)
                             .setSignaturePaddings(KeyProperties.SIGNATURE_PADDING_RSA_PSS)
                             .build());
 
-            KeyPair keyPair = keyPairGenerator.generateKeyPair();
-            //Signature signature = Signature.getInstance("SHA256withRSA/PSS");
-            //signature.initSign(keyPair.getPrivate());
-
+            keyPairGenerator.generateKeyPair();
             Log.d(TAG, "RSA init M");
         } catch (GeneralSecurityException e){
             Log.e(TAG, "알고리즘 지원하지 않는 디바이스", e);
@@ -157,7 +153,6 @@ public class RSACryptor {
      * @return publicKey
      */
     public String getPublicKeyStr() {
-
         byte[] publicKeyBytes = ((KeyStore.PrivateKeyEntry) keyEntry).getCertificate().getPublicKey().getEncoded();
         String publicKey = new String(Base64.encode(publicKeyBytes,Base64.DEFAULT));
 
@@ -199,44 +194,35 @@ public class RSACryptor {
     }
 
 
-    public String getDigitalSignature(String packageName, String text) {
+    public byte[] getDigitalSignature(String packageName, String text) {
         try{
-            PrivateKey pk = getPrivateKey(packageName);
-
-            byte[] data = text.getBytes("UTF8");
-
             Signature signature = Signature.getInstance("SHA256withRSA/PSS");
-            signature.initSign(pk);
+            signature.initSign(getPrivateKey(packageName));
+            //"SHA256withECDSA");
+
+            byte[] data = text.getBytes("UTF-8");
             signature.update(data);
+
             byte[] signatureBytes = signature.sign();
-            String signatureString = new String(signatureBytes, "UTF8");
-            Log.d(TAG, "signatureString original: "+ text);
-            Log.d(TAG, "signatureString: "+ signatureString);
-            return signatureString;
+            return signatureBytes;
         } catch (NoSuchAlgorithmException | InvalidKeyException | UnsupportedEncodingException | SignatureException e) {
             Log.e(TAG, "error in digital signature" + e);
             return null;
         }
     }
 
-    public boolean verifySignature(String packageName, String signature, String original){
+    public boolean verifySignature(String packageName, byte[] signature, String original){
         try{
-
-            // Get private key from String
-            PublicKey publicKey = getPublicKey(packageName);
-            byte[] publicKeyBytes = publicKey.getEncoded();
-
-            // text to bytes
-            byte[] originalBytes = original.getBytes("UTF8");
-            //signature to bytes
-            byte[] signatureBytes = signature.getBytes("UTF8");
-            //byte[] signatureBytes =new byte[](signature, );
-
+            //byte[] signatureBytes = signature.getBytes("UTF-8");
             Signature sig = Signature.getInstance("SHA256withRSA/PSS");
-            sig.initVerify(publicKey);
-            sig.update(originalBytes);
-            Log.d(TAG, "varifiy ..");
-            return sig.verify(signatureBytes);
+            sig.initVerify(getPublicKey(packageName));
+
+            byte[] data = original.getBytes("UTF-8");
+            sig.update(data);
+
+            boolean result = sig.verify(signature);
+            Log.e(TAG, "signatureString result :" + result);
+            return result;
         }catch(Exception e){
             e.printStackTrace();
             Log.e(TAG,"error for verify:" + e.getMessage());
@@ -291,9 +277,9 @@ public class RSACryptor {
 
 
             Log.d(TAG, "Decrypted Text: "  + decryptedString);
-            } catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException | BadPaddingException | UnsupportedEncodingException | IllegalBlockSizeException e) {
-                Log.e(TAG, "Decrypt fail", e);
-            }
+        } catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException | BadPaddingException | UnsupportedEncodingException | IllegalBlockSizeException e) {
+            Log.e(TAG, "Decrypt fail", e);
+        }
         return decryptedString;
     }
 }
