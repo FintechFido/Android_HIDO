@@ -37,11 +37,12 @@ import javax.security.auth.x500.X500Principal;
 public class RSACryptor {
     private static final String TAG = "RSACryptor";
     private static final String keyStoreName = "AndroidKeyStore";
-
+    private static final String SIGNATURE_ALGORITHM = "SHA256withRSA";
     private KeyStore.Entry keyEntry;
 
 
     // 비대칭 암호화(공개키) 알고리즘 호출 상수
+    // TODO: 사용안하면 삭제
     private static final String CIPHER_ALGORITHM = "RSA/ECB/OAEPWithSHA-256AndMGF1Padding";
 
     // Singleton
@@ -81,7 +82,7 @@ public class RSACryptor {
     }
 
     /**
-     * 키 생성
+     * 키 생성 (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
      * @param packageName
      * @return
      */
@@ -121,7 +122,7 @@ public class RSACryptor {
     }
 
     /**
-     *  키 생성
+     *  키 생성 (Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
      * @param context
      * @return
      */
@@ -131,7 +132,7 @@ public class RSACryptor {
             Calendar end = Calendar.getInstance();
             end.add(Calendar.YEAR, 25);
 
-            KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA", keyStoreName);
+            KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(KeyProperties.KEY_ALGORITHM_RSA, keyStoreName);
 
             keyPairGenerator.initialize(new KeyPairGeneratorSpec.Builder(context)
                     .setKeySize(2048)
@@ -148,6 +149,58 @@ public class RSACryptor {
             Log.e(TAG, "알고리즘 지원하지 않는 디바이스", e);
         }
     }
+
+    /**
+     *  디지털 서명 함수 (privateKey)
+     *  text 에 서명하여 반환
+     * @param packageName
+     * @param text
+     * @return
+     */
+    public String getDigitalSignature(String packageName, String text) {
+        try{
+            Signature signature = Signature.getInstance(SIGNATURE_ALGORITHM);
+            signature.initSign(getPrivateKey(packageName));
+
+            byte[] data = text.getBytes();
+            signature.update(data);
+
+            byte[] signatureBytes = signature.sign();
+            String signatureStr = Base64.encodeToString(signatureBytes, Base64.NO_WRAP);
+            Log.d(TAG, "final dec mm Signature:" + signatureStr);
+            return signatureStr;
+        } catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
+            Log.e(TAG, "error in digital signature" + e);
+            return null;
+        }
+    }
+
+    /**
+     * 디지털 서명 증명 함수 (publicKey)
+     * test를 위해 작성
+     * @param packageName
+     * @param signature
+     * @param original
+     * @return
+     */
+    public boolean verifySignature(String packageName, String signature, String original){
+        try{
+            Signature sig = Signature.getInstance(SIGNATURE_ALGORITHM);
+            sig.initVerify(getPublicKey(packageName));
+
+            byte[] data = original.getBytes();
+            sig.update(data);
+
+            boolean result = sig.verify(Base64.decode(signature, Base64.NO_WRAP));
+            Log.d(TAG, "signatureString result :" + result);
+            return result;
+        }catch(Exception e){
+            e.printStackTrace();
+            Log.e(TAG,"error for verify:" + e.getMessage());
+            return false;
+        }
+    }
+
 
     /**
      * PublicKey String 으로 반환
@@ -191,43 +244,6 @@ public class RSACryptor {
         } catch (IOException | CertificateException | NoSuchAlgorithmException | KeyStoreException | UnrecoverableKeyException e) {
             Log.d(TAG, "private key get fail : " + e);
             return null;
-        }
-    }
-
-
-    public byte[] getDigitalSignature(String packageName, String text) {
-        try{
-            Signature signature = Signature.getInstance("SHA256withRSA");
-            signature.initSign(getPrivateKey(packageName));
-            //"SHA256withECDSA");
-
-            byte[] data = text.getBytes("UTF-8");
-            signature.update(data);
-
-            byte[] signatureBytes = signature.sign();
-            return signatureBytes;
-        } catch (NoSuchAlgorithmException | InvalidKeyException | UnsupportedEncodingException | SignatureException e) {
-            Log.e(TAG, "error in digital signature" + e);
-            return null;
-        }
-    }
-
-    public boolean verifySignature(String packageName, byte[] signature, String original){
-        try{
-            //byte[] signatureBytes = signature.getBytes("UTF-8");
-            Signature sig = Signature.getInstance("SHA256withRSA");
-            sig.initVerify(getPublicKey(packageName));
-
-            byte[] data = original.getBytes("UTF-8");
-            sig.update(data);
-
-            boolean result = sig.verify(signature);
-            Log.e(TAG, "signatureString result :" + result);
-            return result;
-        }catch(Exception e){
-            e.printStackTrace();
-            Log.e(TAG,"error for verify:" + e.getMessage());
-            return false;
         }
     }
 
