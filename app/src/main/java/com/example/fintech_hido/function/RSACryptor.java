@@ -114,10 +114,6 @@ public class RSACryptor {
             Log.d(TAG, "RSA init M");
         } catch (GeneralSecurityException e){
             Log.e(TAG, "알고리즘 지원하지 않는 디바이스", e);
-            /**
-             * TODO
-             * alert 추가
-             */
         }
     }
 
