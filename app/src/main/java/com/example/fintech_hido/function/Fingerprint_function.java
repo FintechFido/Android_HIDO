@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.biometric.BiometricPrompt;
@@ -16,8 +17,6 @@ import com.example.fintech_hido.network.AppHelper;
 import com.example.fintech_hido.network.SSL_Connection;
 import com.example.fintech_hido.network.SendRequest;
 
-import java.io.UnsupportedEncodingException;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.concurrent.Executor;
 
@@ -118,7 +117,7 @@ public class Fingerprint_function extends AppCompatActivity
             do_fingerprint();
         }
         else {
-            call_intent.putExtra("result", "true");
+            call_intent.putExtra("result", "false");
             setResult(4000, call_intent);
             finish();
         }
@@ -216,19 +215,23 @@ public class Fingerprint_function extends AppCompatActivity
     public void return_result(boolean result) {
 
         if(mode.equals("register")) {
+            setResult(1000,  call_intent);
             if (result) {
                 call_intent.putExtra("result", "true");
                 finish();
             } else {
-                Alert.alert_function(Fingerprint_function.this, "register");
+                call_intent.putExtra("result", "false");
+                finish();
             }
         }
         else if(mode.equals("auth")) {
             if (result) {
                 call_intent.putExtra("result", "true");
+                call_intent.putExtra("result","true");
+                setResult(4000, call_intent);
                 finish();
             } else {
-                Alert.alert_function(Fingerprint_function.this, "register");
+                Alert.alert_function(Fingerprint_function.this, "auth");
                 // 이 부분 따로 만들어줘야 한다
             }
 
