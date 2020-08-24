@@ -28,6 +28,7 @@ public class Fingerprint_function extends AppCompatActivity
     private BiometricPrompt.PromptInfo promptInfo;
     private String mode;
     private Intent call_intent;
+    private User user=  User.getInstance();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,16 +75,16 @@ public class Fingerprint_function extends AppCompatActivity
     {
         System.out.println("CHECK : register function");
         //set_info(String session_key, String package_name, int running_code, int saved_code, String imei)
-        User.getInstance().set_info(getIntent().getExtras().getString("session_key"),
+        user.set_info(getIntent().getExtras().getString("session_key"),
                 getIntent().getExtras().getInt("running"),
                 0,
                 getIntent().getExtras().getString("imei"));
 
         SendRequest sendRequest = new SendRequest();
         HashMap<String, String> hashMap = new HashMap<String, String>();
-        hashMap.put("session_key", User.getInstance().get_session_key());
-        hashMap.put("running", String.valueOf(User.getInstance().get_running_code()));
-        hashMap.put("imei", User.getInstance().get_imei());
+        hashMap.put("session_key", user.get_session_key());
+        hashMap.put("running", String.valueOf(user.get_running_code()));
+        hashMap.put("imei", user.get_imei());
         System.out.println("HASH MAP check : "+hashMap);
         // send(String url, int method, final HashMap<String, String> hashMap, Context context)
         sendRequest.send("https://"+SSL_Connection.getSsl_connection().get_url()+"/registration/fingerprint",
@@ -97,11 +98,10 @@ public class Fingerprint_function extends AppCompatActivity
         return rsaCryptor.getPublicKeyStr();
     }
 
-    private String getEncChallengeNum() {
+    private String getSignedCN(String CN) {
         RSACryptor rsaCryptor= RSACryptor.getInstance();
         rsaCryptor.init(this);
-        // TODO: 서버에서 받아온 challenge_number 로 교체하기
-        return rsaCryptor.getDigitalSignature(this.getPackageName(), User.getInstance().get_challenge_number());
+        return rsaCryptor.getDigitalSignature(this.getPackageName(), CN);
     }
 
 
@@ -178,9 +178,9 @@ public class Fingerprint_function extends AppCompatActivity
                 // 서버에 Session key, 구동 앱 은행 코드, public key, imei 전송
                 SendRequest sendRequest = new SendRequest();
                 HashMap<String, String> hashMap = new HashMap<String, String>();
-                hashMap.put("session_key", User.getInstance().get_session_key());
-                hashMap.put("running", String.valueOf(User.getInstance().get_running_code()));
-                hashMap.put("imei", User.getInstance().get_imei());
+                hashMap.put("session_key", user.get_session_key());
+                hashMap.put("running", String.valueOf(user.get_running_code()));
+                hashMap.put("imei", user.get_imei());
                 hashMap.put("public_key", getPublicKey());
                 System.out.println("HASH MAP check : " + hashMap);
                 // send(String url, int method, final HashMap<String, String> hashMap, Context context)
@@ -195,11 +195,7 @@ public class Fingerprint_function extends AppCompatActivity
                 hashMap.put("running", String.valueOf(getIntent().getExtras().getInt("running")));
                 hashMap.put("saved", getIntent().getExtras().getString("saved").toString());
                 hashMap.put("mode", "auth");
-                String challenge_num = getEncChallengeNum();
-                //
-                hashMap.put("challenge_number", challenge_num);
-                Log.d(TAG, "final dec challenge :" +challenge_num);
-                        //Encrypt(User.getInstance().get_challenge_number()));
+                hashMap.put("challenge_number", getSignedCN(user.get_challenge_number()));
 
                 SendRequest sendRequest = new SendRequest();
                 // send(String url, int method, final HashMap<String, String> hashMap, Context context)
