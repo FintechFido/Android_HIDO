@@ -105,9 +105,7 @@ PATCH = 7
                         Fingerprint_function fingerprint_function = (Fingerprint_function) context;
                         fingerprint_function.return_result(true);
                     } else {
-                        Fingerprint_function fingerprint_function = (Fingerprint_function) context;
-                        fingerprint_function.call_back(false);
-                        //Alert.alert_function(context, "register");
+                        Alert.alert_function(context, "register_result");
                     }
                 }
                 else if (jsonObject.getString("mode").toString().equals("fingerprint_valid")) {
@@ -117,8 +115,7 @@ PATCH = 7
                         Fingerprint_function fingerprint_function = (Fingerprint_function) context;
                         fingerprint_function.auth_function(true);
                     } else {
-                        Fingerprint_function fingerprint_function = (Fingerprint_function) context;
-                        fingerprint_function.auth_function(false);
+                        Alert.alert_function(context, "auth");
                     }
                 }
                 else if (jsonObject.getString("mode").toString().equals("auth")) {
@@ -127,8 +124,7 @@ PATCH = 7
                         Fingerprint_function fingerprint_function = (Fingerprint_function) context;
                         fingerprint_function.return_result(true);
                     } else {
-                        Fingerprint_function fingerprint_function = (Fingerprint_function) context;
-                        fingerprint_function.return_result(false);
+                        Alert.alert_function(context, "auth_result");
                     }
                 }
                 else {

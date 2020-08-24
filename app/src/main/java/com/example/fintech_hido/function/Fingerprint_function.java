@@ -43,11 +43,15 @@ public class Fingerprint_function extends AppCompatActivity
             setContentView(R.layout.fingerprint_register);
             register_function();
         }
+        /*
         else if(mode.equals("auth")){
+            mode = "auth";
             setContentView(R.layout.fingerprint_auth);
-
         }
+
+         */
         else if(mode.equals("auth_check")) {
+            setContentView(R.layout.fingerprint_auth);
             HashMap<String, String> hashMap = new HashMap<String, String>();
             hashMap.put("session_key", getIntent().getExtras().getString("session_key").toString());
             hashMap.put("imei", getIntent().getExtras().getString("imei").toString());
@@ -68,6 +72,7 @@ public class Fingerprint_function extends AppCompatActivity
 
     public void register_function()
     {
+        System.out.println("CHECK : register function");
         //set_info(String session_key, String package_name, int running_code, int saved_code, String imei)
         User.getInstance().set_info(getIntent().getExtras().getString("session_key"),
                 getIntent().getExtras().getInt("running"),
@@ -96,7 +101,7 @@ public class Fingerprint_function extends AppCompatActivity
         RSACryptor rsaCryptor= RSACryptor.getInstance();
         rsaCryptor.init(this);
         // TODO: 서버에서 받아온 challenge_number 로 교체하기
-        return rsaCryptor.getDigitalSignature(this.getPackageName(), "123456789");
+        return rsaCryptor.getDigitalSignature(this.getPackageName(), User.getInstance().get_challenge_number());
     }
 
 
@@ -117,6 +122,7 @@ public class Fingerprint_function extends AppCompatActivity
             do_fingerprint();
         }
         else {
+            mode = "auth";
             call_intent.putExtra("result", "false");
             setResult(4000, call_intent);
             finish();
@@ -124,6 +130,7 @@ public class Fingerprint_function extends AppCompatActivity
     }
 
     public void do_fingerprint() {
+        System.out.println("CHECK : do fingerprint");
         executor = ContextCompat.getMainExecutor(Fingerprint_function.this);
         biometricPrompt = new BiometricPrompt(this,
                 executor, new BiometricPrompt.AuthenticationCallback() {
@@ -161,6 +168,7 @@ public class Fingerprint_function extends AppCompatActivity
 
     public void call_back(boolean result)
     {
+        System.out.println("CHECK : call back");
         if(result) {
             call_intent.putExtra("result", "true");
 
@@ -192,8 +200,6 @@ public class Fingerprint_function extends AppCompatActivity
                 hashMap.put("challenge_number", challenge_num);
                 Log.d(TAG, "final dec challenge :" +challenge_num);
                         //Encrypt(User.getInstance().get_challenge_number()));
-                // key로 암호화해서 전송해야 한다!
-                //
 
                 SendRequest sendRequest = new SendRequest();
                 // send(String url, int method, final HashMap<String, String> hashMap, Context context)
@@ -206,7 +212,7 @@ public class Fingerprint_function extends AppCompatActivity
             if (mode.equals("register"))
                 setResult(1000,  call_intent);
             else if(mode.equals("auth"))
-                setResult(2000,  call_intent);
+                setResult(4000,  call_intent);
             finish();
         }
     }
@@ -226,16 +232,15 @@ public class Fingerprint_function extends AppCompatActivity
         }
         else if(mode.equals("auth")) {
             if (result) {
-                call_intent.putExtra("result", "true");
                 call_intent.putExtra("result","true");
                 setResult(4000, call_intent);
                 finish();
             } else {
-                Alert.alert_function(Fingerprint_function.this, "auth");
-                // 이 부분 따로 만들어줘야 한다
+                call_intent.putExtra("result","false");
+                setResult(4000, call_intent);
+                finish();
             }
-
         }
-
+        System.out.println(mode);
     }
 }

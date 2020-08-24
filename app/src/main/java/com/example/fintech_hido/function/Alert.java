@@ -21,8 +21,20 @@ public class Alert extends AppCompatActivity {
             setneutralButton("normal",context);
         }
         else if(mode.equals("register")){
-            builder.setTitle("알림").setMessage("요청이 실패했습니다");
-            setneutralButton("return_fingerprint",context);
+            builder.setTitle("알림").setMessage("지문정보가 이미 존재합니다");
+            setneutralButton("register",context);
+        }
+        else if(mode.equals("register_result")){
+            builder.setTitle("알림").setMessage("지문정보 등록에 실패했습니다");
+            setneutralButton("register_result",context);
+        }
+        else if(mode.equals("auth")){
+            builder.setTitle("알림").setMessage("지문정보가 없습니다");
+            setneutralButton("auth_function",context);
+        }
+        else if(mode.equals("auth_result")){
+            builder.setTitle("알림").setMessage("인증에 실패했습니다");
+            setneutralButton("result",context);
         }
     }
 
@@ -45,12 +57,30 @@ public class Alert extends AppCompatActivity {
                 }
             });
         }
-        else if(mode.equals("return_fingerprint")){
+        else if(mode.equals("register")){
             builder.setNeutralButton("확인", new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     Fingerprint_function fingerprint_function = (Fingerprint_function)context;
                     fingerprint_function.call_back(false);
+                }
+            });
+        }
+        else if(mode.equals("result")){
+            builder.setNeutralButton("확인", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    Fingerprint_function fingerprint_function = (Fingerprint_function)context;
+                    fingerprint_function.return_result(false);
+                }
+            });
+        }
+        else if(mode.equals("auth_function")){
+            builder.setNeutralButton("확인", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    Fingerprint_function fingerprint_function = (Fingerprint_function)context;
+                    fingerprint_function.auth_function(false);
                 }
             });
         }
