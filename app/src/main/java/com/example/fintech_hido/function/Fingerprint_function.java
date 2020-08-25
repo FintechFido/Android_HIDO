@@ -2,7 +2,6 @@ package com.example.fintech_hido.function;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -44,20 +43,17 @@ public class Fingerprint_function extends AppCompatActivity
             setContentView(R.layout.fingerprint_register);
             register_function();
         }
-        /*
-        else if(mode.equals("auth")){
-            mode = "auth";
-            setContentView(R.layout.fingerprint_auth);
-        }
 
-         */
         else if(mode.equals("auth_check")) {
             setContentView(R.layout.fingerprint_auth);
             HashMap<String, String> hashMap = new HashMap<String, String>();
             hashMap.put("session_key", getIntent().getExtras().getString("session_key").toString());
             hashMap.put("imei", getIntent().getExtras().getString("imei").toString());
             hashMap.put("running", String.valueOf(getIntent().getExtras().getInt("running")));
-            hashMap.put("saved", getIntent().getExtras().getString("saved").toString());
+            if(getIntent().getExtras().getString("saved").toString().equals("A 은행"))
+                hashMap.put("saved", "1");
+            else if(getIntent().getExtras().getString("saved").toString().equals("B 은행"))
+                hashMap.put("saved", "2");;
             hashMap.put("mode", "auth_check");
             SendRequest sendRequest = new SendRequest();
             // send(String url, int method, final HashMap<String, String> hashMap, Context context)
@@ -193,7 +189,8 @@ public class Fingerprint_function extends AppCompatActivity
                 hashMap.put("session_key", getIntent().getExtras().getString("session_key").toString());
                 hashMap.put("imei", getIntent().getExtras().getString("imei").toString());
                 hashMap.put("running", String.valueOf(getIntent().getExtras().getInt("running")));
-                hashMap.put("saved", getIntent().getExtras().getString("saved").toString());
+                //hashMap.put("saved", getIntent().getExtras().getString("saved").toString());
+                hashMap.put("saved", "5");
                 hashMap.put("mode", "auth");
                 hashMap.put("challenge_number", getSignedCN(user.get_challenge_number()));
 
@@ -217,11 +214,13 @@ public class Fingerprint_function extends AppCompatActivity
     public void return_result(boolean result) {
 
         if(mode.equals("register")) {
-            setResult(1000,  call_intent);
+
             if (result) {
+                setResult(1000,  call_intent);
                 call_intent.putExtra("result", "true");
                 finish();
             } else {
+                setResult(1000,  call_intent);
                 call_intent.putExtra("result", "false");
                 finish();
             }

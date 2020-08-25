@@ -131,10 +131,13 @@ PATCH = 7
                     Alert.alert_function(context, "fail");
                 }
             }
+            else {
+                Alert.alert_function(context, "loading");
+            }
         }catch (Exception e) {
             // 온갖 오류
             e.printStackTrace();
-            Alert.alert_function(context, "fail");
+            Alert.alert_function(context, "loading");
         }
     }
 }
