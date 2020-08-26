@@ -2,6 +2,7 @@ package com.example.fintech_hido.function;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -53,8 +54,9 @@ public class Fingerprint_function extends AppCompatActivity
             if(getIntent().getExtras().getString("saved").toString().equals("A 은행"))
                 hashMap.put("saved", "1");
             else if(getIntent().getExtras().getString("saved").toString().equals("B 은행"))
-                hashMap.put("saved", "2");;
+                hashMap.put("saved", "2");
             hashMap.put("mode", "auth_check");
+            System.out.println(hashMap);
             SendRequest sendRequest = new SendRequest();
             // send(String url, int method, final HashMap<String, String> hashMap, Context context)
             sendRequest.send("https://"+SSL_Connection.getSsl_connection().get_url()+"/fingerprint/valid",
@@ -190,7 +192,10 @@ public class Fingerprint_function extends AppCompatActivity
                 hashMap.put("imei", getIntent().getExtras().getString("imei").toString());
                 hashMap.put("running", String.valueOf(getIntent().getExtras().getInt("running")));
                 //hashMap.put("saved", getIntent().getExtras().getString("saved").toString());
-                hashMap.put("saved", "5");
+                if(getIntent().getExtras().getString("saved").toString().equals("A 은행"))
+                    hashMap.put("saved", "1");
+                else if(getIntent().getExtras().getString("saved").toString().equals("B 은행"))
+                    hashMap.put("saved", "2");
                 hashMap.put("mode", "auth");
                 hashMap.put("challenge_number", getSignedCN(user.get_challenge_number()));
 
